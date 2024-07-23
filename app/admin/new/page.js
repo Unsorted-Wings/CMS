@@ -1,52 +1,51 @@
-// pages/admin/new.js
+// src/pages/admin/new.js
 "use client";
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css'; // Import styles for the editor
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function NewPost() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [message, setMessage] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (title && content) {
-      const newPost = { title, content };
-      const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
-      const updatedPosts = [...savedPosts, newPost];
-      localStorage.setItem('posts', JSON.stringify(updatedPosts));
-      setTitle('');
-      setContent('');
-      setMessage('Post saved successfully!');
-    } else {
-      setMessage('Please fill in both fields.');
-    }
+    // Add logic to save post to database
+    const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
+    const updatedPosts = [...savedPosts, { title, content }];
+    localStorage.setItem('posts', JSON.stringify(updatedPosts));
+    setTitle('');
+    setContent('');
+    console.log({ title, content });
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-      <div className="w-full max-w-2xl bg-gray-800 shadow-lg rounded-lg p-8">
-        <h2 className="text-3xl font-bold mb-6 text-center text-gray-100">Create a New Post</h2>
-        {message && <div className="mb-4 text-green-500">{message}</div>}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="container mx-auto">
+        <h2 className="text-3xl font-bold mb-6 text-center text-gray-100">New Post</h2>
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="mb-4">
             <label className="block text-gray-400 mb-2">Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-600 rounded-lg p-3 focus:ring focus:ring-blue-200 bg-gray-700 text-gray-100"
+              className="w-full border border-gray-600 rounded-lg p-2 bg-gray-700 text-white"
             />
           </div>
-          <div>
+          <div className="mb-4">
             <label className="block text-gray-400 mb-2">Content</label>
-            <textarea
+            <ReactQuill
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full border border-gray-600 rounded-lg p-3 focus:ring focus:ring-blue-200 bg-gray-700 text-gray-100"
-              rows="10"
-            ></textarea>
+              onChange={setContent}
+              className="bg-gray-700 text-white"
+            />
           </div>
-          <button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition">Save Post</button>
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+            Save
+          </button>
         </form>
       </div>
     </div>

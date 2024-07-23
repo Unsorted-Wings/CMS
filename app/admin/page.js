@@ -1,11 +1,18 @@
+// pages/admin/index.js
 "use client";
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function Admin() {
   const [posts, setPosts] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentPost, setCurrentPost] = useState({ title: '', content: '' });
   const [editIndex, setEditIndex] = useState(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
@@ -19,32 +26,30 @@ export default function Admin() {
   };
 
   const handleEdit = (index) => {
-    setCurrentPost(posts[index]);
     setEditIndex(index);
-    setIsEditing(true);
+    setTitle(posts[index].title);
+    setContent(posts[index].content);
   };
 
   const handleNewPost = () => {
-    setCurrentPost({ title: '', content: '' });
     setEditIndex(null);
-    setIsEditing(true);
+    setTitle('');
+    setContent('');
   };
 
   const handleSave = () => {
-    const updatedPosts = [...posts];
+    const newPost = { title, content };
     if (editIndex !== null) {
-      updatedPosts[editIndex] = currentPost;
+      const updatedPosts = [...posts];
+      updatedPosts[editIndex] = newPost;
+      setPosts(updatedPosts);
+      localStorage.setItem('posts', JSON.stringify(updatedPosts));
     } else {
-      updatedPosts.push(currentPost);
+      const updatedPosts = [...posts, newPost];
+      setPosts(updatedPosts);
+      localStorage.setItem('posts', JSON.stringify(updatedPosts));
     }
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
-    setIsEditing(false);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCurrentPost((prev) => ({ ...prev, [name]: value }));
+    handleNewPost();
   };
 
   return (
@@ -61,7 +66,10 @@ export default function Admin() {
           {posts.map((post, index) => (
             <div key={index} className="bg-gray-800 p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold mb-2 text-gray-100">{post.title}</h3>
-              <p className="text-gray-300 mb-4">{post.content}</p>
+              <div
+                className="text-gray-300 mb-4"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
               <button
                 onClick={() => handleEdit(index)}
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition"
@@ -77,43 +85,27 @@ export default function Admin() {
             </div>
           ))}
         </div>
-        {isEditing && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h3 className="text-2xl font-bold mb-4 text-gray-100">{editIndex !== null ? 'Edit Post' : 'New Post'}</h3>
-              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-                <div className="mb-4">
-                  <label className="block text-gray-100 mb-2">Title</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={currentPost.title}
-                    onChange={handleChange}
-                    className="w-full border border-gray-600 rounded-lg p-2 bg-gray-700 text-white"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-100 mb-2">Content</label>
-                  <textarea
-                    name="content"
-                    value={currentPost.content}
-                    onChange={handleChange}
-                    className="w-full border border-gray-600 rounded-lg p-2 bg-gray-700 text-white"
-                    rows="10"
-                  ></textarea>
-                </div>
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg">Save</button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg ml-2"
-                >
-                  Cancel
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
+        <div className="mt-6">
+          <h3 className="text-xl font-bold mb-4">{editIndex !== null ? 'Edit Post' : 'New Post'}</h3>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+            className="w-full p-2 mb-4 bg-gray-800 text-white rounded-lg"
+          />
+          <ReactQuill
+            value={content}
+            onChange={setContent}
+            className="mb-4 bg-gray-800 text-white rounded-lg"
+          />
+          <button
+            onClick={handleSave}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
